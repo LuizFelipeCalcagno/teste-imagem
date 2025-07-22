@@ -11,7 +11,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // 🟢 Configura o CORS antes das rotas
 app.use(cors({
-  origin: "http://silver-trifle-230b53.netlify.app", // 🔥 coloque o domínio do Netlify aqui
+  origin: "https://silver-trifle-230b53.netlify.app", // 🔥 coloque o domínio do Netlify aqui
   methods: ["GET", "POST"],
   credentials: true
 }));
