@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import dotenv from "dotenv";
-import cors from "cors"; // 👈 importa o CORS aqui
+import cors from "cors";
 
 dotenv.config();
 const app = express();
@@ -11,7 +11,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // 🟢 Configura o CORS antes das rotas
 app.use(cors({
-  origin: "https://splendid-sfogliatella-b8ee2d.netlify.app", // 🔥 coloque o domínio do Netlify aqui
+  origin: "https://splendid-sfogliatella-b8ee2d.netlify.app", // ✅ Seu domínio do Netlify
   methods: ["GET", "POST"],
   credentials: true
 }));
@@ -38,26 +38,51 @@ app.get("/", (req, res) => {
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     const fileBuffer = req.file.buffer;
+
+    // Upload para Cloudinary
     cloudinary.uploader.upload_stream({ folder: "uploads" }, async (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err) {
+        console.error("Erro no Cloudinary:", err);
+        return res.status(500).json({ error: "Erro no upload para Cloudinary" });
+      }
+
+      console.log("Upload no Cloudinary bem-sucedido:", result.secure_url);
+
+      // Prepara dados para o Supabase
+      const now = new Date().toISOString();
+      const { originalname, size, mimetype } = req.file;
 
       const { error: dbError } = await supabase
         .from("imagens")
-        .insert([{ url: result.secure_url }]);
+        .insert([{
+          url: result.secure_url,
+          name: originalname,                         // Nome do arquivo
+          data: JSON.stringify({ size, mimetype }),   // Metadados no JSONB
+          inserted_at: now,                           // Timestamp inserção
+          updated_at: now                             // Timestamp atualização
+        }]);
 
-      if (dbError) return res.status(500).json({ error: dbError.message });
+      if (dbError) {
+        console.error("Erro ao salvar no Supabase:", dbError);
+        return res.status(500).json({ error: "Erro ao salvar imagem no banco de dados" });
+      }
 
-      res.json({ url: result.secure_url });
+      res.json({ url: result.secure_url, name: originalname });
     }).end(fileBuffer);
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Erro geral no upload:", err);
+    res.status(500).json({ error: "Erro no upload da imagem" });
   }
 });
 
 // Get all images
 app.get("/imagens", async (req, res) => {
   const { data, error } = await supabase.from("imagens").select("*");
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error("Erro ao buscar imagens:", error);
+    return res.status(500).json({ error: "Erro ao buscar imagens" });
+  }
   res.json(data);
 });
 
