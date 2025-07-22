@@ -16,6 +16,12 @@ app.use(cors({
   credentials: true
 }));
 
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+console.log("SUPABASE_SERVICE_ROLE_KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY);
+console.log("CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
+
+
+
 // Supabase config
 const supabase = createClient(
   process.env.SUPABASE_URL,
