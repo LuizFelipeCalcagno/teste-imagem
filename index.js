@@ -3,14 +3,18 @@ import { createClient } from "@supabase/supabase-js";
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import dotenv from "dotenv";
+import cors from "cors"; // 👈 importa o CORS aqui
 
 dotenv.config();
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-
-console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
-console.log("SUPABASE_SERVICE_ROLE_KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY);
+// 🟢 Configura o CORS antes das rotas
+app.use(cors({
+  origin: "http://silver-trifle-230b53.netlify.app", // 🔥 coloque o domínio do Netlify aqui
+  methods: ["GET", "POST"],
+  credentials: true
+}));
 
 // Supabase config
 const supabase = createClient(
